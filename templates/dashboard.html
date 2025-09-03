@@ -1,0 +1,108 @@
+{% extends 'layout.html' %}
+{% block title %}Dashboard{% endblock %}   
+{% block content %}
+<div class="main-content">
+  <nav class="navbar navbar-expand-lg custom-navbar">
+        <div class="container-fluid ">
+           
+            <div class="me-auto d-flex align-items-center ">
+                  <img src="{{ url_for('static', filename='images/logo.png') }}" alt="User Avatar" class="rounded-circle user-avatar ">
+                  <span class="text-white me-2 d-none d-lg-block ms-2">Admin, {{ session.username }}</span> 
+            </div>
+            <div class="ms-auto d-flex align-items-center">
+                  <button class="btn btn-outline-light me-3 d-none d-lg-block">
+                    <a href="{{ url_for('auth.logout') }}" class="text-white"><i class="fas fa-power-off"></i></a>
+                  </button>
+
+            </div>
+
+            <a class="navbar-brand d-lg-none" href="#">
+                  <i class="fas fa-bars fa-lg text-white"></i>
+            </a>
+
+        </div>
+    </nav>
+
+
+        <h1 class="section-title">Menu Dashboard</h1>
+
+        <div class="container-fluid content-wrapper">
+        <div class="row h-100">
+            <div class="col-lg-8 main-content d-flex justify-content-center align-items-center">
+                <div class="card sentiment-card p-5 shadow-lg">
+                    <h1 class="text-center mb-4">SELAMAT DATANG DI WEB ANALISIS SENTIMENT</h1>
+                    <p class="text-center">web analisis sentimen adalah platform online yang dirancang untuk menganalisis dan mengekstrak informasi emosional atau opini publik dari teks. Dengan menggunakan teknologi seperti <em>Natural Language Processing (NLP)</em> dan <em>machine learning</em>, situs ini membantu Anda memahami apakah suatu teks memiliki sentimen <span class="sentiment-positive">positif</span>, <span class="sentiment-negative">negatif</span>, atau <span class="sentiment-neutral">netral</span>.</p>
+                </div>
+            </div>
+
+            <!-- view card -->
+            <div class="col-lg-4 sidebar1">
+
+                <div class="sidebar-item card shadow-sm mb-4">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="icon-box icon-blue me-3">
+                            <i class="fas fa-cube fa-lg"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 text-muted">DATA LATIH</p>
+                            <h4 class="mb-0" id="data-latih-display">-</h4>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-item card shadow-sm mb-4">
+                    <div class="card-body d-flex align-items-center">
+                        <div class="icon-box icon-green me-3">
+                            <i class="fas fa-cubes fa-lg"></i>
+                        </div>
+                        <div>
+                            <p class="mb-0 text-muted">DATA UJI</p>
+                            <h4 class="mb-0" id="data-uji-display">-</h4>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- end view card -->
+
+
+            <!-- foother -->
+            <footer class="footer mt-auto py-3 text-center">
+        <div class="container-fluid">
+            <span class="text-muted">Copyright Leo Nardi Halawa &copy; 2025 <a href="#" class="footer-link">Analisis Sentimen</a>. All rights reserved.</span>
+        </div>
+    </footer>
+            <!-- end foother -->
+
+
+        <!-- Tambah elemen untuk menampilkan hasil -->
+        <!-- <div id="processing-result" class="result-container"></div> -->
+
+        
+      </div>
+
+   <script>
+    // Jalankan skrip ini saat halaman selesai dimuat
+    document.addEventListener('DOMContentLoaded', function() {
+        // 1. Ambil data hasil ekstraksi dari sessionStorage
+        const storedResultJSON = sessionStorage.getItem('extractionResult');
+        
+        // 2. Cek apakah ada data yang tersimpan
+        if (storedResultJSON) {
+            // Ubah string JSON kembali menjadi objek JavaScript
+            const result = JSON.parse(storedResultJSON);
+            
+            // 3. Ambil nilai yang spesifik dan tampilkan
+            const dataLatih = result.stats.train_data_count_before;
+            document.getElementById('data-latih-display').textContent = dataLatih;
+
+            const dataUji = result.stats.test_data_count;
+            document.getElementById('data-uji-display').textContent = dataUji;
+        } else {
+            // Jika belum ada proses ekstraksi yang dijalankan
+            document.getElementById('data-latih-display').textContent = '-';
+        }
+    });
+   </script>
+{% endblock %}

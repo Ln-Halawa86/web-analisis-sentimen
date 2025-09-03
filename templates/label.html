@@ -1,0 +1,166 @@
+{% extends 'layout.html' %}
+{% block title %}Pelabelan{% endblock %}
+
+{% block head %}
+    {{ super() }} {# Memanggil konten head dari layout.html jika ada #}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <style>
+        .container { margin-top: 30px; margin-bottom: 30px; }
+        .section-title { margin-bottom: 1.5rem; font-weight: 700; color: #343a40; }
+        .card { background-color: #ffffff; border: 1px solid #dee2e6; border-radius: 0.75rem; box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.05); }
+        .card-header { background-color: #ffffff; border-bottom: 1px solid #dee2e6; font-size: 1.2rem; font-weight: 600; padding: 1rem 1.5rem; color: #343a40; }
+        .card-body { padding: 1.5rem; }
+        .card-footer { background-color: #f8f9fa; border-top: 1px solid #dee2e6; padding: 1rem 1.5rem; }
+        .table-responsive { max-height: 60vh; overflow-y: auto; }
+        .table thead th { font-weight: 600; color: #6c757d; border-bottom-width: 2px; position: sticky; top: 0; background-color: #ffffff; }
+        .status-validated { color: #198754; font-weight: 600; }
+        .status-validated .bi { vertical-align: middle; }
+        tr.needs-validation { background-color: #fff3cd; }
+        .badge { font-size: 0.8rem; padding: 0.4em 0.7em; }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Minor style to ensure sticky header works well with rounded corners */
+        .table-container thead th:first-child { border-top-left-radius: 0.5rem; }
+        .table-container thead th:last-child { border-top-right-radius: 0.5rem; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Pelabelan Pakar</h1>
+            <p class="text-gray-600 mt-1">Halaman ini menampilkan data yang telah divalidasi oleh pakar.</p>
+        </header>
+
+        <!-- Bagian Statistik -->
+        {% if stats %}
+        <div class="mb-8">
+            <h2 class="text-xl font-semibold mb-4 text-gray-700">Statistik Sentimen</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500">Total Data</h3>
+                    <p class="text-3xl font-bold text-blue-600">{{ stats.total }}</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500">Positif</h3>
+                    <p class="text-3xl font-bold text-green-600">{{ stats.positif }}</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500">Negatif</h3>
+                    <p class="text-3xl font-bold text-red-600">{{ stats.negatif }}</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500">Netral</h3>
+                    <p class="text-3xl font-bold text-yellow-600">{{ stats.netral }}</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                    <h3 class="text-sm font-medium text-gray-500">Belum Dilabeli</h3>
+                    <p class="text-3xl font-bold text-gray-600">{{ stats.belum_dilabeli }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- PERUBAHAN: Kotak Pencarian -->
+        <div class="mb-4">
+            <label for="table-search" class="sr-only">Cari</label>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                    <svg class="w-5 h-5 text-gray-500" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"></path></svg>
+                </div>
+                <input type="text" id="table-search" class="block w-full p-2 pl-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500" placeholder="Cari berdasarkan teks...">
+            </div>
+        </div>
+
+        <!-- Kontainer Tabel yang Bisa Di-scroll -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 table-container">
+            <div class="max-h-[60vh] overflow-y-auto">
+                <table class="w-full text-sm text-left text-gray-600">
+                    <thead class="bg-gray-100 text-xs text-gray-700 uppercase sticky top-0 z-10">
+                        <tr>
+                            <th scope="col" class="px-6 py-3 w-16">ID</th>
+                            <th scope="col" class="px-6 py-3">Teks</th>
+                            <th scope="col" class="px-6 py-3 w-40">Sentiment Pakar</th>
+                            <th scope="col" class="px-6 py-3 w-32 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="data-table-body">
+                        {% if data_efesiensi %}
+                            {% for item in data_efesiensi %}
+                            <tr class="bg-white border-b hover:bg-gray-50">
+                                <td class="px-6 py-4 font-medium text-gray-900">{{ item.id }}</td>
+                                <td class="px-6 py-4">{{ item.full_text }}</td>
+                                <td class="px-6 py-4">
+                                    {% if item.sentiment_pakar == 'positif' %}
+                                        <span class="px-2 py-1 text-xs font-medium text-green-800 bg-green-100 rounded-full">Positif</span>
+                                    {% elif item.sentiment_pakar == 'negatif' %}
+                                        <span class="px-2 py-1 text-xs font-medium text-red-800 bg-red-100 rounded-full">Negatif</span>
+                                    {% elif item.sentiment_pakar == 'netral' %}
+                                        <span class="px-2 py-1 text-xs font-medium text-yellow-800 bg-yellow-100 rounded-full">Netral</span>
+                                    {% else %}
+                                        <span class="px-2 py-1 text-xs font-medium text-gray-800 bg-gray-100 rounded-full">Belum Dilabeli</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-6 py-4 text-center">
+                                    {% if item.is_validated %}
+                                        <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full">
+                                            <svg class="w-3 h-3 mr-1.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                                            Tervalidasi
+                                        </span>
+                                    {% else %}
+                                         <span class="inline-flex items-center px-3 py-1 text-xs font-semibold text-gray-700 bg-gray-200 rounded-full">
+                                            Belum Divalidasi
+                                        </span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="4" class="text-center py-8 text-gray-500">
+                                    Tidak ada data untuk ditampilkan.
+                                </td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- PERUBAHAN: Script untuk fungsionalitas pencarian -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const searchInput = document.getElementById('table-search');
+            const tableBody = document.getElementById('data-table-body');
+            const tableRows = tableBody.getElementsByTagName('tr');
+
+            searchInput.addEventListener('keyup', function () {
+                const filter = searchInput.value.toLowerCase();
+
+                for (let i = 0; i < tableRows.length; i++) {
+                    // Kolom teks berada di sel kedua (indeks 1)
+                    let td = tableRows[i].getElementsByTagName('td')[1];
+                    if (td) {
+                        let textValue = td.textContent || td.innerText;
+                        if (textValue.toLowerCase().indexOf(filter) > -1) {
+                            tableRows[i].style.display = "";
+                        } else {
+                            tableRows[i].style.display = "none";
+                        }
+                    }
+                }
+            });
+        });
+    </script>
+</div>
+{% endblock %}

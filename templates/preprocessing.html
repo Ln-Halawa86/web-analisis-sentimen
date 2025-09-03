@@ -1,0 +1,309 @@
+{% extends 'layout.html' %} {% block title %}Preprocessing{% endblock %} {% block content %}
+<!-- Main Content -->
+<div class="main-content">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary-color: #0d6efd; --light-gray: #f8f9fa; --dark-blue: #212529; --text-muted: #6c757d; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--light-gray); }
+        .card { border: 1px solid #dee2e6; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); border-radius: 0.75rem; }
+        .btn { border-radius: 0.5rem; font-weight: 500; padding: 0.75rem 1.5rem; }
+        .table-responsive { max-height: 65vh; }
+        .table thead { position: sticky; top: 0; background-color: var(--dark-blue); color: white; z-index: 1; }
+        .table td, .table th { vertical-align: middle; padding: 1rem; }
+        .empty-state { padding: 4rem; color: var(--text-muted); }
+        .empty-state i { font-size: 4rem; margin-bottom: 1rem; color: #ced4da; }
+        .modal-header, .modal-footer { border: none; }
+        .pagination .page-link { color: var(--primary-color); }
+        .pagination .page-item.active .page-link { background-color: var(--primary-color); border-color: var(--primary-color); color: white; }
+
+        /* PERUBAHAN: Gaya untuk progress bar di dalam tombol */
+        .btn-processing {
+            position: relative;
+            overflow: hidden;
+            transition: color 0.3s ease;
+        }
+        .btn-processing .progress-bar-inner {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.25);
+            width: 0%;
+            transition: width 0.1s linear;
+        }
+        .btn-processing .btn-text {
+            position: relative;
+            z-index: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-5 fw-bold text-dark">Halaman Preprocessing</h1>
+            <p class="lead text-muted">Jalankan, lihat, dan kelola hasil preprocessing teks Anda di sini.</p>
+        </div>
+
+        <div class="card mb-4">
+            <div class="card-body p-4 d-flex flex-wrap justify-content-center align-items-center gap-3">
+                <button id="preprocessBtn" class="btn btn-primary"><i class="bi bi-gear-fill me-2"></i>Mulai Preprocessing</button>
+                <button id="deleteBtn" class="btn btn-outline-danger" disabled><i class="bi bi-trash-fill me-2"></i>Hapus Data</button>
+                <button id="downloadBtn" class="btn btn-outline-success" disabled><i class="bi bi-download me-2"></i>Download Hasil</button>
+            </div>
+        </div>
+
+        <div id="notificationArea" class="mb-4"></div>
+
+        <!-- panel pencarian -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" id="searchInput" class="form-control" placeholder="Cari berdasarkan teks asli atau hasil stemming...">
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header bg-white border-bottom-0 py-3">
+                <h5 class="mb-0 fw-semibold"><i class="bi bi-table me-2 text-primary"></i>Hasil Proses</h5>
+            </div>
+            <div class="card-body p-0 position-relative">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th scope="col">#</th>
+                                <th scope="col">Full Text (Asli)</th>
+                                <th scope="col">Case Folding</th>
+                                <th scope="col">Cleansing</th>
+                                <th scope="col">Tokenizing</th>
+                                <th scope="col">Normalisasi</th>
+                                <th scope="col">Stopwords</th>
+                                <th scope="col">Stemming</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tableBody">
+                            <tr><td colspan="8" class="text-center empty-state"><i class="bi bi-file-earmark-text"></i><h5 class="fw-bold">Belum Ada Data</h5><p>Klik "Mulai Preprocessing" untuk menampilkan data.</p></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div id="paginationFooter" class="card-footer bg-white d-flex flex-wrap justify-content-between align-items-center" style="display: none !important;">
+                <div id="paginationInfo" class="text-muted"></div>
+                <nav><ul class="pagination mb-0" id="paginationControls"></ul></nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- PERUBAHAN: Modal/Pop-up tidak lagi diperlukan untuk hapus langsung -->
+    <!-- <div class="modal fade" id="deleteConfirmModal" ...> ... </div> -->
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- ELEMEN DOM ---
+        const preprocessBtn = document.getElementById('preprocessBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const tableBody = document.getElementById('tableBody');
+        const paginationFooter = document.getElementById('paginationFooter');
+        const paginationInfo = document.getElementById('paginationInfo');
+        const paginationControls = document.getElementById('paginationControls');
+        
+        // PERUBAHAN: Variabel untuk modal dihapus
+        // const deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+
+        // --- STATE APLIKASI ---
+        let processedData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const rowsPerPage = 10;
+        let progressInterval = null;
+
+        // --- FUNGSI-FUNGSI UTAMA ---
+        const handlePreprocessing = async () => {
+            setLoadingState(true);
+            startProgress(); // Mulai simulasi progress
+            showNotification('Memulai proses preprocessing...', 'info');
+            
+            try {
+                // Jalankan proses backend
+                const runResponse = await fetch("{{ url_for('jalankan_preprocessing_route') }}", { method: 'POST' });
+                const runResult = await runResponse.json();
+                
+                if (!runResponse.ok) throw new Error(runResult.message || 'Gagal menjalankan proses.');
+                
+                // Setelah selesai, hentikan progress di 100% dan tampilkan data
+                stopProgress(true); 
+                showNotification(runResult.message, 'success');
+                await loadInitialData();
+
+            } catch (error) {
+                stopProgress(false); // Hentikan progress jika ada error
+                showNotification(`Error: ${error.message}`, 'danger');
+            } finally {
+                // Reset tombol setelah jeda singkat
+                setTimeout(() => {
+                    setLoadingState(false);
+                }, 1500);
+            }
+        };
+
+        // PERUBAHAN: Fungsi requestDelete tidak lagi diperlukan
+        // const requestDelete = () => deleteConfirmModal.show();
+
+        const executeDelete = async () => {
+            // PERUBAHAN: Tambahkan konfirmasi sederhana dari browser
+            if (!confirm('Apakah Anda yakin ingin menghapus semua data?')) {
+                return; // Batalkan jika pengguna menekan "Cancel"
+            }
+
+            try {
+                const response = await fetch("{{ url_for('hapus_data_preprocessing_route') }}", { method: 'POST' });
+                const result = await response.json();
+                if (!response.ok) throw new Error(result.message || 'Gagal menghapus data.');
+                processedData = [];
+                filteredData = [];
+                tableBody.innerHTML = `<tr><td colspan="8" class="text-center empty-state"><i class="bi bi-trash3"></i><h5 class="fw-bold">Data Dihapus</h5><p>Data telah berhasil dihapus.</p></td></tr>`;
+                deleteBtn.disabled = true;
+                downloadBtn.disabled = true;
+                paginationFooter.style.display = 'none !important';
+                showNotification(result.message, 'warning');
+            } catch (error) {
+                showNotification(`Gagal menghapus data: ${error.message}`, 'danger');
+            }
+        };
+
+        const loadInitialData = async () => {
+            try {
+                const response = await fetch("{{ url_for('get_processed_data_route') }}");
+                const result = await response.json();
+                if (result.status === 'success' && result.data.length > 0) {
+                    processedData = result.data;
+                    filteredData = result.data;
+                    currentPage = 1;
+                    displayPage(currentPage);
+                    deleteBtn.disabled = false;
+                    downloadBtn.disabled = false;
+                } else {
+                    deleteBtn.disabled = true;
+                    downloadBtn.disabled = true;
+                }
+            } catch (error) {
+                console.error("Gagal memuat data awal:", error);
+            }
+        };
+
+        // Fungsi baru untuk melakukan pencarian
+        const handleSearch = () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm) {
+                filteredData = processedData.filter(item => {
+                    const fullText = (item.full_text || '').toLowerCase();
+                    const stemming = (item.stemming || '').toLowerCase();
+                    return fullText.includes(searchTerm) || stemming.includes(searchTerm);
+                });
+            } else {
+                filteredData = processedData; // Kembalikan ke data asli jika pencarian kosong
+            }
+            currentPage = 1; // Selalu kembali ke halaman pertama setelah pencarian
+            displayPage(currentPage);
+        };
+
+        // --- FUNGSI PAGINASI & RENDER ---
+        function displayPage(page) {
+            currentPage = page;
+            const start = (page - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+             renderTable(filteredData.slice(start, end), start);
+             paginationInfo.textContent = `Menampilkan ${start + 1} sampai ${Math.min(end,filteredData.length)} dari ${filteredData.length} data`;
+             setupPagination();
+        }
+
+        function setupPagination() {
+            paginationControls.innerHTML = "";
+            const pageCount = Math.ceil(filteredData.length / rowsPerPage);
+            if (pageCount <= 1) {
+                paginationFooter.style.display = 'none !important';
+                return;
+            }
+            const pagesToShow = getPaginationNumbers(currentPage, pageCount);
+            paginationControls.appendChild(createNavButton('«', currentPage > 1 ? currentPage - 1 : null));
+            pagesToShow.forEach(page => paginationControls.appendChild(createPageButton(page)));
+            paginationControls.appendChild(createNavButton('»', currentPage < pageCount ? currentPage + 1 : null));
+            paginationFooter.style.display = 'flex';
+        }
+        
+        // ... (Fungsi-fungsi pembantu lainnya seperti createPageButton, renderTable, dll. tetap sama)
+        const handleDownload = () => {
+        // Langsung arahkan browser ke endpoint download di backend
+        window.location.href = "{{ url_for('download_preprocessing_csv_route') }}";
+        };
+
+        function createPageButton(page) { const li = document.createElement('li'); li.classList.add('page-item'); if (typeof page === 'string') { li.classList.add('disabled'); const span = document.createElement('span'); span.classList.add('page-link'); span.textContent = '...'; li.appendChild(span); } else { if (page === currentPage) li.classList.add('active'); const a = document.createElement('a'); a.classList.add('page-link'); a.href = '#'; a.textContent = page; a.addEventListener('click', (e) => { e.preventDefault(); if (page !== currentPage) displayPage(page); }); li.appendChild(a); } return li; }
+        function createNavButton(text, page) { const li = document.createElement('li'); li.classList.add('page-item'); if (!page) li.classList.add('disabled'); const a = document.createElement('a'); a.classList.add('page-link'); a.href = '#'; a.innerHTML = text; if (page) { a.addEventListener('click', (e) => { e.preventDefault(); displayPage(page); }); } li.appendChild(a); return li; }
+        function getPaginationNumbers(currentPage, totalPages) { const pageNeighbours = 1; const totalNumbers = (pageNeighbours * 2) + 3; const totalBlocks = totalNumbers + 2; if (totalPages > totalBlocks) { const startPage = Math.max(2, currentPage - pageNeighbours); const endPage = Math.min(totalPages - 1, currentPage + pageNeighbours); let pages = [1]; if (startPage > 2) pages.push('...'); for (let i = startPage; i <= endPage; i++) pages.push(i); if (endPage < totalPages - 1) pages.push('...'); pages.push(totalPages); return pages; } let pages = []; for (let i = 1; i <= totalPages; i++) pages.push(i); return pages; }
+        const renderTable = (data, startNumber = 0) => { if (!data || data.length === 0) return; let tableHTML = ''; data.forEach((item, index) => { const fullText = item.full_text || ''; const caseFolding = item.case_folding || ''; const cleansing = item.cleansing || ''; const tokenizing = item.tokenizing || ''; const normalized = item.normalized || ''; const stopwords = item.stopwords || ''; const stemming = item.stemming || ''; tableHTML += `<tr><th scope="row">${startNumber + index + 1}</th><td>${fullText}</td><td>${caseFolding}</td><td>${cleansing}</td><td>${tokenizing}</td><td>${normalized}</td><td>${stopwords}</td><td>${stemming}</td></tr>`; }); tableBody.innerHTML = tableHTML; };
+        const setLoadingState = (isLoading) => { preprocessBtn.disabled = isLoading; preprocessBtn.innerHTML = isLoading ? `<span class="spinner-border spinner-border-sm me-2"></span> Memproses...` : `<i class="bi bi-gear-fill me-2"></i> Mulai Preprocessing`; if (!isLoading && processedData.length > 0) { deleteBtn.disabled = false; downloadBtn.disabled = false; } };
+        const showNotification = (message, type = 'info') => { const notificationArea = document.getElementById('notificationArea'); const alertWrapper = document.createElement('div'); alertWrapper.innerHTML = `<div class="alert alert-${type} alert-dismissible fade show" role="alert">${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>`; notificationArea.append(alertWrapper); setTimeout(() => { alertWrapper.remove(); }, 5000); };
+        
+        // --- EVENT LISTENERS ---
+        preprocessBtn.addEventListener('click', handlePreprocessing);
+        // PERUBAHAN: Tombol hapus sekarang langsung memanggil executeDelete
+        deleteBtn.addEventListener('click', executeDelete);
+        // PERUBAHAN: Event listener untuk tombol di dalam modal tidak diperlukan lagi
+        // confirmDeleteBtn.addEventListener('click', executeDelete);
+        downloadBtn.addEventListener('click', handleDownload);
+        searchInput.addEventListener('input', handleSearch);
+        loadInitialData();
+
+         // PERUBAHAN: Fungsi untuk memulai dan menghentikan progress bar
+        const startProgress = () => {
+            let percentage = 0;
+            preprocessBtn.classList.add('btn-processing');
+            preprocessBtn.innerHTML = '<div class="progress-bar-inner"></div><span class="btn-text">Memproses... 0%</span>';
+            const progressBar = preprocessBtn.querySelector('.progress-bar-inner');
+            const btnText = preprocessBtn.querySelector('.btn-text');
+            
+            // PERUBAHAN: Durasi disesuaikan dengan rata-rata waktu Anda
+            const simulationDuration = 113350; // Durasi simulasi dalam milidetik (113.35 detik)
+            const updateFrequency = 100; // Seberapa sering update (setiap 0.1 detik)
+            
+            progressInterval = setInterval(() => {
+                // Jangan update jika backend sudah selesai lebih dulu
+                if (!progressInterval) return;
+
+                percentage += (updateFrequency / simulationDuration) * 100;
+                if (percentage >= 99) {
+                    percentage = 99; // Tahan di 99% sampai proses asli selesai
+                    clearInterval(progressInterval);
+                }
+                if(progressBar) progressBar.style.width = `${percentage}%`;
+                if(btnText) btnText.textContent = `Memproses... ${Math.floor(percentage)}%`;
+            }, updateFrequency);
+        };
+
+        const stopProgress = (isSuccess) => {
+            if (progressInterval) {
+                clearInterval(progressInterval);
+                progressInterval = null;
+            }
+            const progressBar = preprocessBtn.querySelector('.progress-bar-inner');
+            const btnText = preprocessBtn.querySelector('.btn-text');
+            if (isSuccess && progressBar && btnText) {
+                progressBar.style.width = '100%';
+                btnText.textContent = 'Selesai 100%';
+            }
+        };
+        
+    });
+    </script>
+</body>
+{% endblock %}
+
+

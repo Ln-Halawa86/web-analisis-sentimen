@@ -1,0 +1,203 @@
+/* Custom CSS */
+
+
+/* Navbar Styling */
+.custom-navbar {
+    
+    background-color: #3498db; /* Blue color for navbar */
+    color: white;
+    padding: 1rem 1.5rem;
+    border-bottom: 5px solid #2980b9; /* Darker blue line below navbar */
+
+}
+
+.custom-navbar .navbar-brand {
+    color: white;
+}
+
+.custom-navbar .user-avatar {
+    width: 40px;
+    height: 40px;
+    /*object-fit: cover;*/
+    object-fit: cover;
+    border: 2px solid white;
+}
+
+/* Main Content Wrapper */
+.content-wrapper {
+    flex-grow: 1;
+    padding-top: 20px; /* Space from navbar */
+    padding-bottom: 20px; /* Space from footer */
+}
+
+/* Main Sentiment Card */
+.sentiment-card {
+    background-color: white;
+    border-radius: 15px;
+    max-width: 800px; /* Adjust as needed */
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08); /* More subtle shadow */
+    padding: 40px;
+    line-height: 1.8;
+}
+
+.sentiment-card h1 {
+    font-size: 2.8rem;
+    font-weight: 600;
+    color: #333;
+    letter-spacing: -0.5px;
+    margin-bottom: 30px;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.05);
+}
+
+.sentiment-card p {
+    font-size: 1.1rem;
+    color: #555;
+}
+
+.sentiment-card p em {
+    font-weight: 500;
+    color: #3498db; /* Highlight for NLP, machine learning */
+}
+
+.sentiment-positive {
+    color: #28a745; /* Green for positive */
+    font-weight: 600;
+}
+
+.sentiment-negative {
+    color: #dc3545; /* Red for negative */
+    font-weight: 600;
+}
+
+.sentiment-neutral {
+    color: #6c757d; /* Gray for neutral */
+    font-weight: 600;
+}
+
+/* Sidebar Styling */
+.sidebar1 {
+    background-color: #f8f9fa; /* Light background for sidebar */
+    padding: 20px;
+    border-left: 1px solid #eee;
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center items horizontally */
+    gap: 20px; /* Space between sidebar items */
+}
+
+.sidebar-item {
+    width: 90%; /* Adjust width of sidebar cards */
+    max-width: 350px; /* Max width for consistency */
+    border-radius: 10px;
+    overflow: hidden; /* For shadow */
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: transform 0.2s ease-in-out;
+}
+
+.sidebar-item:hover {
+    transform: translateY(-5px);
+}
+
+.sidebar-item .card-body {
+    padding: 20px;
+}
+
+.sidebar-item p {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.sidebar-item h4 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.icon-box {
+    width: 60px;
+    height: 60px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: white;
+    font-size: 1.5rem;
+    flex-shrink: 0; /* Prevent shrinking */
+}
+
+.icon-purple {
+    background-color: #6f42c1; /* Example color */
+}
+
+.icon-blue {
+    background-color: #0d6efd; /* Bootstrap primary blue */
+}
+
+.icon-green {
+    background-color: #198754; /* Bootstrap success green */
+}
+
+/* Footer Styling */
+.footer {
+    position: relative;
+    top: 4vw;
+    background-color: #343a40; /* Dark background for footer */
+    color: white;
+    font-size: 0.9rem;
+}
+
+.footer .footer-link {
+    color: #3498db; /* Blue link color */
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.footer .footer-link:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 991.98px) {
+    .main-content {
+        order: 2; /* Put main content below sidebar on small screens */
+        padding-top: 30px;
+        padding-bottom: 30px;
+    }
+    .sidebar {
+        order: 1; /* Put sidebar above main content on small screens */
+        border-left: none;
+        border-bottom: 1px solid #eee;
+        padding-top: 30px;
+        padding-bottom: 30px;
+    }
+    .sentiment-card {
+        padding: 30px;
+    }
+    .sentiment-card h1 {
+        font-size: 2rem;
+    }
+    .sentiment-card p {
+        font-size: 1rem;
+    }
+    .sidebar-item {
+        width: 100%; /* Full width on smaller screens */
+    }
+}
+
+@media (max-width: 575.98px) {
+    .custom-navbar .btn {
+        display: none !important; /* Hide power off button on very small screens */
+    }
+    .custom-navbar span {
+        display: none !important; /* Hide Riky name on very small screens */
+    }
+    .sentiment-card {
+        padding: 20px;
+    }
+    .sentiment-card h1 {
+        font-size: 1.8rem;
+    }
+    .sentiment-card p {
+        font-size: 0.9rem;
+    }
+}

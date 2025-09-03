@@ -1,0 +1,103 @@
+body {
+    background-color: #F6F0F0; /* Dark background similar to the image */
+    font-family: 'Poppins', sans-serif; /* Use Poppins or similar for modern look */
+    color: #fff; /* Default text color */
+    background-image: url('data:image/svg+xml;utf8,<svg width="100%" height="100%" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><filter id="noiseFilter"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100%" height="100%" filter="url(#noiseFilter)" opacity="0.05"/></svg>'); /* Subtle noise effect */
+}
+
+.login-container {
+    background-color: white; /* Darker grey background for the form container */
+    padding: 40px;
+    border-radius: 15px; /* Rounded corners */
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.5); /* Subtle shadow */
+    max-width: 450px; /* Max width for responsiveness */
+    width: 100%; /* Full width within max-width */
+}
+
+.login-title {
+    color: black; /* Gold-like color for the title */
+    font-weight: 700; /* Bolder font */
+    letter-spacing: 2px; /* Spacing between letters */
+    font-size: 2.5rem; /* Larger font size */
+    margin-bottom: 2.5rem; /* More space below title */
+}
+
+.custom-input-group {
+    margin-bottom: 1.5rem; /* Space between input groups */
+}
+
+.input-label {
+    color: black; /* White color for labels */
+    font-weight: 600; /* Semi-bold */
+    margin-bottom: 0.5rem; /* Space between label and input */
+    display: block; /* Make label a block element for spacing */
+}
+
+.custom-input {
+    background-color: white; /* Darker background for input fields */
+    border: 1px solid #444444; /* Slightly lighter border */
+    color: black; /* White text color inside input */
+    padding: 12px 15px; /* Comfortable padding */
+    border-radius: 8px; /* Rounded corners for inputs */
+    transition: all 0.3s ease; /* Smooth transition on focus */
+}
+
+.custom-input::placeholder {
+    color: black; /* Placeholder color */
+    font-style: italic;
+}
+
+.custom-input:focus {
+    background-color: white; /* Keep same background on focus */
+    border-color: #C4E1E6; /* Gold border on focus */
+    box-shadow: 0 0 0 0.25rem rgba(196, 225, 230, 0.25); /* Subtle gold shadow on focus */
+    color: black; /* Ensure text color remains white on focus */
+}
+
+.login-button {
+    background-color: #8DBCC7; /* Gold color for the button */
+    border-color: #8DBCC7; /* Gold border for the button */
+    color: #333333; /* Dark text color on gold button */
+    font-weight: 700; /* Bolder text */
+    padding: 12px 20px; /* Comfortable padding */
+    border-radius: 8px; /* Rounded corners */
+    font-size: 1.2rem; /* Larger font size */
+    transition: all 0.3s ease; /* Smooth transition */
+}
+
+.login-button:hover {
+    background-color: #A4CCD9; /* Slightly darker gold on hover */
+    border-color: #A4CCD9;
+    color: #333333; /* Maintain dark text color */
+    transform: translateY(-2px); /* Slight lift effect */
+    box-shadow: 0 5px 15px rgba(164, 204, 217, 0.3); /* Enhanced shadow on hover */
+}
+
+.signup-link {
+    color: #ffd700; /* Gold color for the sign up link */
+    text-decoration: none; /* No underline by default */
+    font-weight: 600; /* Semi-bold */
+    transition: color 0.3s ease; /* Smooth transition */
+}
+
+.signup-link:hover {
+    color: #e6c200; /* Slightly darker gold on hover */
+    text-decoration: underline; /* Underline on hover */
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 576px) {
+    .login-container {
+        padding: 30px 20px;
+        margin: 20px; /* Add some margin on very small screens */
+    }
+
+    .login-title {
+        font-size: 2rem;
+    }
+
+    .login-button {
+        font-size: 1.1rem;
+        padding: 10px 15px;
+    }
+}

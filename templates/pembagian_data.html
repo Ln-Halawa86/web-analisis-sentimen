@@ -1,0 +1,442 @@
+{% extends 'layout.html' %}
+{% block title %}Pembagian Data{% endblock %}
+{% block content %}
+<!-- Custom CSS untuk tampilan modern -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8f9fa;
+        }
+        .container {
+            margin-top: 30px;
+            margin-bottom: 50px;
+        }
+        .section-title {
+            font-weight: 700;
+            color: #343a40;
+            margin-bottom: 1.5rem;
+        }
+        .card {
+            border: 1px solid #dee2e6;
+            border-radius: 0.75rem;
+            box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.07);
+            transition: all 0.3s ease;
+        }
+        .card-header {
+            background-color: #ffffff;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 1rem 1.5rem;
+            color: #495057;
+        }
+        .card-header .bi {
+            margin-right: 0.5rem;
+            color: #6c757d;
+        }
+        .ratio-display {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #212529;
+        }
+        .ratio-display .text-muted {
+            font-weight: 400;
+        }
+        .form-range::-webkit-slider-thumb {
+            background-color: #0d6efd;
+        }
+        .form-range::-moz-range-thumb {
+            background-color: #0d6efd;
+        }
+        .results-card {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        .results-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .nav-tabs .nav-link {
+            font-weight: 600;
+            color: #6c757d;
+        }
+        .nav-tabs .nav-link.active {
+            color: #0d6efd;
+            border-color: #dee2e6 #dee2e6 #fff;
+        }
+        .table-responsive {
+            max-height: 400px;
+        }
+        .table thead th {
+            position: sticky;
+            top: 0;
+            background-color: #f8f9fa;
+        }
+        .sentiment-badge {
+            font-size: 0.9em;
+            padding: 0.4em 0.7em;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1 class="section-title">Menu Pembagian Data</h1>
+
+        <!-- Panel Kontrol: Pengaturan Rasio & Tombol Aksi -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-gear-fill"></i>
+                Pengaturan Rasio & Aksi
+            </div>
+            <div class="card-body p-4 text-center">
+                <label for="ratio-slider" class="form-label fw-medium">Geser untuk mengatur rasio data training:</label>
+                <input type="range" class="form-range w-75 mx-auto" id="ratio-slider" min="50" max="90" value="80" step="5">
+                <div class="ratio-display mt-2">
+                    <span id="ratio-display-train" class="text-primary">80%</span> <span class="text-muted">Data Training</span> / 
+                    <span id="ratio-display-test" class="text-secondary">20%</span> <span class="text-muted">Data Testing</span>
+                </div>
+                <hr class="my-4">
+                <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+                    <button class="btn btn-primary btn-lg px-5" id="start-process-btn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status" aria-hidden="true"></span>
+                        <i class="bi bi-play-circle-fill me-2"></i>
+                        Mulai Proses Pembagian
+                    </button>
+                    <button class="btn btn-danger btn-lg px-5 d-none" id="delete-data-btn">
+                        <i class="bi bi-trash-fill me-2"></i>
+                        Hapus Hasil
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Area Hasil: Tabel Data Training & Testing (Awalnya Tersembunyi) -->
+        <div class="card results-card d-none" id="results-card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <i class="bi bi-table"></i>
+                    Hasil Pembagian Data
+                </div>
+                <!-- PERUBAHAN: Tombol Ikon Mata ditambahkan -->
+                <button class="btn btn-sm btn-outline-secondary" id="view-counts-btn" title="Lihat Rincian Jumlah Sentimen">
+                    <i class="bi bi-eye-fill"></i> Lihat Rincian
+                </button>
+            </div>
+            <div class="card-body">
+                
+                <!-- KONTROL FILTER DAN PENCARIAN -->
+                <div class="row mb-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="sentimentFilter" class="form-label fw-medium">Filter Sentimen:</label>
+                        <select class="form-select" id="sentimentFilter">
+                            <option value="semua" selected>Tampilkan Semua</option>
+                            <option value="positif">Positif</option>
+                            <option value="negatif">Negatif</option>
+                            <option value="netral">Netral</option>
+                        </select>
+                    </div>
+                    <!-- FITUR PENCARIAN TEKS BARU -->
+                    <div class="col-md-8">
+                        <label for="textSearch" class="form-label fw-medium">Cari Teks:</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="bi bi-search"></i></span>
+                            <input type="text" class="form-control" id="textSearch" placeholder="Ketik untuk mencari di kedua tabel...">
+                        </div>
+                    </div>
+                </div>
+                <!-- AKHIR KONTROL -->
+
+                <!-- Navigasi Tab -->
+                <ul class="nav nav-tabs" id="myTab" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="training-tab" data-bs-toggle="tab" data-bs-target="#training-pane" type="button" role="tab">
+                            <i class="bi bi-database-check"></i> Data Training
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="testing-tab" data-bs-toggle="tab" data-bs-target="#testing-pane" type="button" role="tab">
+                            <i class="bi bi-database-dash"></i> Data Testing
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Konten Tab -->
+                <div class="tab-content" id="myTabContent">
+                    <!-- Panel Data Training -->
+                    <div class="tab-pane fade show active p-3" id="training-pane" role="tabpanel">
+                        <div class="alert alert-info" id="training-alert"></div>
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr><th>ID</th><th>Teks</th><th>Sentimen</th></tr>
+                                </thead>
+                                <tbody id="training-table-body">
+                                    <!-- Data Training akan diisi oleh JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Panel Data Testing -->
+                    <div class="tab-pane fade p-3" id="testing-pane" role="tabpanel">
+                        <div class="alert alert-secondary" id="testing-alert"></div>
+                         <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead>
+                                    <tr><th>ID</th><th>Teks</th><th>Sentimen</th></tr>
+                                </thead>
+                                <tbody id="testing-table-body">
+                                    <!-- Data Testing akan diisi oleh JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PERUBAHAN: Modal baru untuk menampilkan rincian jumlah sentimen -->
+    <div class="modal fade" id="sentimentCountsModal" tabindex="-1" aria-labelledby="sentimentCountsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="sentimentCountsModalLabel"><i class="bi bi-bar-chart-line-fill me-2"></i>Rincian Jumlah Sentimen</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h6>Data Training</h6>
+                    <ul class="list-group mb-3" id="training-counts-list">
+                        <!-- Rincian data training akan diisi oleh JavaScript -->
+                    </ul>
+                    <h6>Data Testing</h6>
+                    <ul class="list-group" id="testing-counts-list">
+                        <!-- Rincian data testing akan diisi oleh JavaScript -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript untuk Interaktivitas -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // --- Inisialisasi Elemen ---
+            const ratioSlider = document.getElementById('ratio-slider');
+            const ratioDisplayTrain = document.getElementById('ratio-display-train');
+            const ratioDisplayTest = document.getElementById('ratio-display-test');
+            const startBtn = document.getElementById('start-process-btn');
+            const deleteBtn = document.getElementById('delete-data-btn');
+            const resultsCard = document.getElementById('results-card');
+            const trainingTableBody = document.getElementById('training-table-body');
+            const testingTableBody = document.getElementById('testing-table-body');
+            const trainingAlert = document.getElementById('training-alert');
+            const testingAlert = document.getElementById('testing-alert');
+            const sentimentFilter = document.getElementById('sentimentFilter');
+            const textSearch = document.getElementById('textSearch');
+            // PERUBAHAN: Inisialisasi elemen modal dan tombolnya
+            const viewCountsBtn = document.getElementById('view-counts-btn');
+            const sentimentCountsModal = new bootstrap.Modal(document.getElementById('sentimentCountsModal'));
+            const trainingCountsList = document.getElementById('training-counts-list');
+            const testingCountsList = document.getElementById('testing-counts-list');
+
+            // Variabel untuk menyimpan data mentah
+            let rawData = null;
+
+            // --- Fungsi-Fungsi ---
+
+            function displayResults(data) {
+                rawData = data; // Simpan data mentah untuk perhitungan
+                populateTables(data);
+                resultsCard.classList.remove('d-none');
+                void resultsCard.offsetWidth;
+                resultsCard.classList.add('visible');
+                deleteBtn.classList.remove('d-none');
+                sentimentFilter.value = 'semua';
+                textSearch.value = '';
+                applyAllFilters();
+            }
+
+            function populateTables(data) {
+                trainingTableBody.innerHTML = '';
+                testingTableBody.innerHTML = '';
+                trainingAlert.innerHTML = `Menampilkan <strong>${data.train_count} dari ${data.total_count}</strong> data sebagai data training.`;
+                testingAlert.innerHTML = `Menampilkan <strong>${data.test_count} dari ${data.total_count}</strong> data sebagai data testing.`;
+
+                data.training_data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${row.id}</td><td>${row.text}</td><td>${row.sentiment}</td>`;
+                    trainingTableBody.appendChild(tr);
+                });
+
+                data.testing_data.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${row.id}</td><td>${row.text}</td><td>${row.sentiment}</td>`;
+                    testingTableBody.appendChild(tr);
+                });
+            }
+
+            function applyAllFilters() {
+                const searchValue = textSearch.value.toLowerCase();
+                const sentimentValue = sentimentFilter.value;
+
+                const filterTable = (tableBody) => {
+                    const rows = tableBody.getElementsByTagName('tr');
+                    for (const row of rows) {
+                        const textCell = row.getElementsByTagName('td')[1];
+                        const sentimentCell = row.getElementsByTagName('td')[2];
+
+                        if (textCell && sentimentCell) {
+                            const textContent = textCell.textContent.toLowerCase();
+                            const sentimentContent = sentimentCell.textContent.toLowerCase();
+
+                            const textMatch = textContent.includes(searchValue);
+                            const sentimentMatch = (sentimentValue === 'semua' || sentimentContent === sentimentValue);
+
+                            if (textMatch && sentimentMatch) {
+                                row.style.display = '';
+                            } else {
+                                row.style.display = 'none';
+                            }
+                        }
+                    }
+                };
+
+                filterTable(trainingTableBody);
+                filterTable(testingTableBody);
+            }
+
+            // PERUBAHAN: Fungsi baru untuk menghitung dan menampilkan jumlah sentimen
+            function calculateAndDisplaySentimentCounts() {
+                if (!rawData) return;
+
+                const countSentiments = (dataArray) => {
+                    const counts = { positif: 0, negatif: 0, netral: 0 };
+                    dataArray.forEach(item => {
+                        if (counts.hasOwnProperty(item.sentiment)) {
+                            counts[item.sentiment]++;
+                        }
+                    });
+                    return counts;
+                };
+                
+                const trainingCounts = countSentiments(rawData.training_data);
+                const testingCounts = countSentiments(rawData.testing_data);
+
+                const createListItems = (counts) => {
+                    return `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Positif <span class="badge bg-success rounded-pill sentiment-badge">${counts.positif}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Negatif <span class="badge bg-danger rounded-pill sentiment-badge">${counts.negatif}</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Netral <span class="badge bg-secondary rounded-pill sentiment-badge">${counts.netral}</span>
+                        </li>
+                    `;
+                };
+
+                trainingCountsList.innerHTML = createListItems(trainingCounts);
+                testingCountsList.innerHTML = createListItems(testingCounts);
+
+                sentimentCountsModal.show();
+            }
+            
+            // --- Event Listeners ---
+
+            ratioSlider.addEventListener('input', function() {
+                const trainRatio = this.value;
+                const testRatio = 100 - trainRatio;
+                ratioDisplayTrain.textContent = `${trainRatio}%`;
+                ratioDisplayTest.textContent = `${testRatio}%`;
+            });
+
+            startBtn.addEventListener('click', function() {
+                const spinner = this.querySelector('.spinner-border');
+                const btnIcon = this.querySelector('.bi-play-circle-fill');
+                const selectedRatio = ratioSlider.value;
+
+                this.disabled = true;
+                spinner.classList.remove('d-none');
+                btnIcon.classList.add('d-none');
+                
+                fetch('/proses-pembagian', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ratio: selectedRatio })
+                })
+                .then(response => {
+                    if (!response.ok) throw new Error('Network response was not ok');
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.status === 'success') {
+                        sessionStorage.setItem('split_results', JSON.stringify(data));
+                        displayResults(data);
+                        resultsCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        throw new Error(data.message || 'Terjadi kesalahan di server');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Gagal memproses data. Silakan cek konsol untuk detail.');
+                })
+                .finally(() => {
+                    this.disabled = false;
+                    spinner.classList.add('d-none');
+                    btnIcon.classList.remove('d-none');
+                });
+            });
+
+            deleteBtn.addEventListener('click', function() {
+                if (confirm('Anda yakin ingin MENGHAPUS PERMANEN hasil pembagian data dari DATABASE?')) {
+                    
+                    fetch('/hapus-pembagian-data', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            sessionStorage.removeItem('split_results');
+                            resultsCard.classList.add('d-none');
+                            resultsCard.classList.remove('visible');
+                            this.classList.add('d-none');
+                            alert('Hasil pembagian data telah berhasil dihapus dari database.');
+                        } else {
+                            alert('Gagal menghapus data dari database: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Terjadi kesalahan koneksi saat mencoba menghapus data.');
+                    });
+                }
+            });
+
+            sentimentFilter.addEventListener('change', applyAllFilters);
+            textSearch.addEventListener('input', applyAllFilters);
+
+            // PERUBAHAN: Event listener untuk tombol ikon mata
+            viewCountsBtn.addEventListener('click', calculateAndDisplaySentimentCounts);
+
+            // --- Logika Saat Halaman Pertama Kali Dimuat ---
+            const savedResults = sessionStorage.getItem('split_results');
+            if (savedResults) {
+                console.log("Menemukan hasil tersimpan, menampilkan data...");
+                const data = JSON.parse(savedResults);
+                displayResults(data);
+            }
+        });
+    </script>
+
+</body>
+{% endblock %}

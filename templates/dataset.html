@@ -1,0 +1,58 @@
+{% extends 'layout.html' %} 
+{% block title %}DataSet{% endblock %} 
+{% block content %}
+<div class="main-content">
+  <h1 class="section-title">Menu Dashboard</h1>
+
+  <!-- Tambah elemen untuk menampilkan hasil -->
+  <div id="processing-result" class="result-container"></div>
+
+  <!-- Begin Page Content -->
+  <div class="card-body">
+    <div class="d-flex justify-content-start">
+      <form action="" method="POST" enctype="multipart/form-data">
+        <input class="form-control" name="file" type="file" id="formFile" />
+        <div class="d-grid gap-2">
+          <input class="btn btn-primary mt-2" type="submit" value="Import Dataset" />
+        </div>
+      </form>
+    </div>
+
+    <form action="{{ url_for('delete_dataset') }}" method="POST" onsubmit="return confirm('Anda yakin ingin menghapus seluruh isi dataset? Tindakan ini tidak dapat dibatalkan.');">
+    <button class="btn btn-danger mt-2" type="submit" >Hapus Data</button>
+    </form>
+    
+    <div class="table-responsive mt-1">
+      <table id="myTable" class="display">
+        <thead>
+          <tr>
+            <th>No</th>
+            <th>Tanggal Tweet</th>
+            <th>Tweet</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in data_efesiensi %}
+          <tr>
+            <td>{{row.0}}</td>
+            <td>{{row.1}}</td>
+            <td>{{row.2}}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <nav>
+      <ul class="pagination justify-content-center">
+        <li class="page-item">
+          <a class="page-link"></a>
+        </li>
+
+        <li class="page-item">
+          <a class="page-link">Next</a>
+        </li>
+      </ul>
+    </nav>
+  </div>
+</div>
+{% endblock %}
